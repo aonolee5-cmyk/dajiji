@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>ussass 的小屋</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #111, #333);
+      color: #eee;
+      text-align: center;
+      padding: 15vh;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      animation: fadeIn 2s;
+    }
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    a {
+      color: #f1c40f;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .image-container {
+      display: none;
+      margin-top: 2rem;
+    }
+    .image-container img {
+      width: 100%;
+      max-width: 600px;
+      margin: 1rem 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>欢迎回家 🏠</h1>
+  <p>这是大鸡鸡的房子</p>
+  <a href="#" id="show-images">查看我的图片</a>
+  <div class="image-container">
+    <img src="https://via.placeholder.com/600x400?text=Image+1" alt="Image 1">
+    <img src="https://via.placeholder.com/600x400?text=Image+2" alt="Image 2">
+    <img src="https://via.placeholder.com/600x400?text=Image+3" alt="Image 3">
+  </div>
+
+  <script>
+    document.getElementById('show-images').addEventListener('click', function(event) {
+      event.preventDefault();
+      var imageContainer = document.querySelector('.image-container');
+      if (imageContainer.style.display === 'none') {
+        imageContainer.style.display = 'block';
+      } else {
+        imageContainer.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
