@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>发光的葱的小屋</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    /* ===== 原首页样式 ===== */
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #111, #333);
       color: #eee;
       text-align: center;
-      padding: 15vh;
+      padding: 15vh 0;
     }
     h1 {
       font-size: 3rem;
@@ -38,28 +40,172 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
+
+    /* ===== 游戏区样式 ===== */
+    #game-wrapper{display:none;flex-direction:column;align-items:center;}
+    #board{
+      --cell:min(10vw,50px);
+      --gap:6px;
+      display:grid;
+      grid-template-columns:repeat(7,var(--cell));
+      grid-gap:var(--gap);
+      padding:var(--gap);
+      background:#222;
+      border-radius:6px;
+      margin:15px 0;
+    }
+    .tile{
+      width:var(--cell);height:var(--cell);line-height:var(--cell);
+      text-align:center;border-radius:4px;font-weight:bold;
+      font-size:calc(var(--cell)/2.2);background:#333;color:#eee;
+      transition:all .1s;
+    }
+    /* 数字颜色阶梯 */
+    .n2{background:#eee;color:#776e65;}
+    .n4{background:#ede0c8;color:#776e65;}
+    .n8{background:#f2b179;color:#fff;}
+    .n16{background:#f59563;color:#fff;}
+    .n32{background:#f67c5f;color:#fff;}
+    .n64{background:#f65e3b;color:#fff;}
+    .n128{background:#edcf72;color:#fff;font-size:calc(var(--cell)/2.5);}
+    .n256{background:#edcc61;color:#fff;font-size:calc(var(--cell)/2.5);}
+    .n512{background:#edc850;color:#fff;font-size:calc(var(--cell)/2.5);}
+    .n1024{background:#edc53f;color:#fff;font-size:calc(var(--cell)/3);}
+    .n2048{background:#edc22e;color:#fff;font-size:calc(var(--cell)/3);}
+    .n4096,.n8192,.n16384,.n32768,.n65536{background:#3c3a32;color:#fff;font-size:calc(var(--cell)/3);}
+    .tile-new{animation:pop .15s;}
+    @keyframes pop{0%{transform:scale(.7)}100%{transform:scale(1)}}
+    .score-line{font-size:1.1rem;margin:5px 0;}
+    .ctrl-btn{background:#f1c40f;color:#000;border:none;padding:6px 14px;border-radius:4px;font-size:1rem;cursor:pointer;margin:5px;}
+    .ctrl-btn:hover{background:#f39c12;}
   </style>
 </head>
 <body>
-  <h1>欢迎回家 🏠</h1>
-  <p>这是大鸡鸡的房子</p>
-  <a href="#" id="show-images">查看我的图片</a>
-  <div class="image-container">
-    <img src="https://via.placeholder.com/600x400?text=Image+1" alt="Image 1">
-    <img src="https://via.placeholder.com/600x400?text=Image+2" alt="Image 2">
-    <img src="https://via.placeholder.com/600x400?text=Image+3" alt="Image 3">
+
+  <!-- ****** 原首页 ****** -->
+  <div id="home">
+    <h1>欢迎回家 🏠</h1>
+    <p>这是大鸡鸡的房子</p>
+    <a href="#" id="show-images">查看我的图片</a>
+    <div class="image-container">
+      <img src="https://via.placeholder.com/600x400?text=Image+1" alt="Image 1">
+      <img src="https://via.placeholder.com/600x400?text=Image+2" alt="Image 2">
+      <img src="https://via.placeholder.com/600x400?text=Image+3" alt="Image 3">
+    </div>
+    <br/>
+    <button class="ctrl-btn" id="open-game">开始 7×7 超大 2048</button>
   </div>
 
-  <script>
-    document.getElementById('show-images').addEventListener('click', function(event) {
-      event.preventDefault();
-      var imageContainer = document.querySelector('.image-container');
-      if (imageContainer.style.display === 'none') {
-        imageContainer.style.display = 'block';
-      } else {
-        imageContainer.style.display = 'none';
-      }
+  <!-- ****** 游戏区 ****** -->
+  <div id="game-wrapper">
+    <h1>7×7 超大 2048</h1>
+    <div class="score-line">分数：<span id="score">0</span></div>
+    <div id="board"></div>
+    <button class="ctrl-btn" onclick="initGame()">重新开始</button>
+    <button class="ctrl-btn" id="close-game">返回首页</button>
+  </div>
+
+<script>
+/* ========== 页面切换 ========== */
+const home    = document.getElementById('home');
+const gameW   = document.getElementById('game-wrapper');
+document.getElementById('open-game').onclick  = ()=>{ home.style.display='none'; gameW.style.display='flex'; initGame(); };
+document.getElementById('close-game').onclick = ()=>{ gameW.style.display='none'; home.style.display='block'; };
+
+/* ========== 原图展开关 ========== */
+document.getElementById('show-images').addEventListener('click',function(e){
+  e.preventDefault();
+  const box = document.querySelector('.image-container');
+  box.style.display = (box.style.display==='block')?'none':'block';
+});
+
+/* ========== 2048 游戏逻辑 ========== */
+const SIZE=7;
+let board,score;
+
+function initGame(){
+  board = Array.from({length:SIZE},()=>Array(SIZE).fill(0));
+  score = 0;
+  updateScore();
+  renderBoard();
+  addRandomTile(); addRandomTile();
+}
+
+function renderBoard(){
+  const b = document.getElementById('board');
+  b.innerHTML='';
+  board.forEach((row,r)=>{
+    row.forEach((val,c)=>{
+      const t = document.createElement('div');
+      t.className = val ? 'tile n'+val : 'tile';
+      t.textContent = val||'';
+      if(val) t.classList.add('tile-new');
+      b.appendChild(t);
     });
-  </script>
+  });
+}
+
+function updateScore(){ document.getElementById('score').textContent = score; }
+
+function addRandomTile(){
+  const empties=[];
+  board.forEach((row,r)=>row.forEach((v,c)=>{if(!v) empties.push([r,c])}));
+  if(!empties.length) return;
+  const [r,c] = empties[(Math.random()*empties.length)|0];
+  board[r][c] = Math.random()<.9 ? 2 : 4;
+}
+
+function move(dir){        // 0左 1上 2右 3下
+  let moved=false;
+  const prev = board.map(r=>r.slice());
+  for(let i=0;i<SIZE;i++){
+    let line = [];
+    if(dir===0) line = board[i].slice();
+    if(dir===2) line = board[i].slice().reverse();
+    if(dir===1) for(let j=0;j<SIZE;j++) line.push(board[j][i]);
+    if(dir===3) for(let j=SIZE-1;j>=0;j--) line.push(board[j][i]);
+    const [newLine,pts] = mergeLine(line);
+    score += pts;
+    if(dir===0) board[i] = newLine;
+    if(dir===2) board[i] = newLine.reverse();
+    if(dir===1) newLine.forEach((v,j)=>board[j][i]=v);
+    if(dir===3) newLine.forEach((v,j)=>board[SIZE-1-j][i]=v);
+  }
+  for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(board[r][c]!==prev[r][c])moved=true;
+  if(moved){ addRandomTile(); renderBoard(); updateScore(); checkGameOver(); }
+}
+
+function mergeLine(line){
+  let arr = line.filter(v=>v), pts=0, out=[];
+  for(let i=0;i<arr.length;i++){
+    if(arr[i]===arr[i+1]){
+      const m=arr[i]*2;
+      out.push(m); pts+=m; i++;
+    }else out.push(arr[i]);
+  }
+  while(out.length<SIZE) out.push(0);
+  return [out,pts];
+}
+
+function checkGameOver(){
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      if(!board[r][c]) return;
+      if(c<SIZE-1 && board[r][c]===board[r][c+1]) return;
+      if(r<SIZE-1 && board[r][c]===board[r+1][c]) return;
+    }
+  }
+  setTimeout(()=>alert('无路可走！最终得分：'+score),0);
+}
+
+/* ========== 控制 ========== */
+document.addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k==='ArrowLeft'||k==='a'||k==='A'){e.preventDefault();move(0);}
+  if(k==='ArrowUp'   ||k==='w'||k==='W'){e.preventDefault();move(1);}
+  if(k==='ArrowRight'||k==='d'||k==='D'){e.preventDefault();move(2);}
+  if(k==='ArrowDown' ||k==='s'||k==='S'){e.preventDefault();move(3);}
+});
+</script>
 </body>
 </html>
