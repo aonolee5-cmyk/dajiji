@@ -106,6 +106,26 @@
   </div>
 
 <script>
+/* ===== 存档工具 ===== */
+const SAVE_KEY = 'gc_2047_7x7';          // 本地存储的 key
+function saveGame(){
+  const data = { board, score };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+}
+function loadGame(){
+  const raw = localStorage.getItem(SAVE_KEY);
+  if(!raw) return false;
+  try{
+    const d = JSON.parse(raw);
+    if(!d.board || !Array.isArray(d.board) || d.board.length !== SIZE) return false;
+    board = d.board;
+    score = d.score || 0;
+    return true;
+  }catch(e){ return false; }
+}
+function clearSave(){
+  localStorage.removeItem(SAVE_KEY);
+}
 /* ========== 页面切换 ========== */
 const home    = document.getElementById('home');
 const gameW   = document.getElementById('game-wrapper');
@@ -128,6 +148,18 @@ function initGame(){
   score = 0;
   updateScore();
   renderBoard();
+  addRandomTile(); addRandomTile();
+  if(loadGame()){
+    const goOn = confirm('检测到上局进度，是否继续？\n（取消则重新开始）');
+    if(!goOn) clearSave();          // 用户点“取消”就清档
+    else{                           // 点“确定”用存档
+      updateScore(); renderBoard(); return;
+    }
+  }
+  /* 没有档 / 用户取消 → 全新开局 */
+  board = Array.from({length:SIZE},()=>Array(SIZE).fill(0));
+  score = 0;
+  updateScore(); renderBoard();
   addRandomTile(); addRandomTile();
 }
 
@@ -170,6 +202,7 @@ function move(dir){        // 0左 1上 2右 3下
     if(dir===2) board[i] = newLine.reverse();
     if(dir===1) newLine.forEach((v,j)=>board[j][i]=v);
     if(dir===3) newLine.forEach((v,j)=>board[SIZE-1-j][i]=v);
+    saveGame();
   }
   for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(board[r][c]!==prev[r][c])moved=true;
   if(moved){ addRandomTile(); renderBoard(); updateScore(); checkGameOver(); }
